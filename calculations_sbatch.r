@@ -4,6 +4,18 @@ options(width=300)
 
 numcores=110
 
+install.packages("tidyverse")
+install.packages("data.table")
+install.packages("fst")
+#install.packages("comorbidity")
+install.packages("reshape")
+install.packages("dtplyr")
+install.packages("haven")
+install.packages("vroom")
+#install.packages("dplyr")
+
+
+
 library(tidyverse)
 library(data.table)
 library(fst)
