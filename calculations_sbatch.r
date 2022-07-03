@@ -1,3 +1,7 @@
+#install.packages("packrat")
+#packrat::init("./")
+packrat::on()
+
 options(repr.matrix.max.rows=100, repr.matrix.max.cols=300)
 options(repr.plot.width = 20, repr.plot.height = 15)
 options(width=300)
