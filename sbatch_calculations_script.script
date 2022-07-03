@@ -9,9 +9,9 @@
 #SBATCH --export=ALL
 #SBATCH --constraint=cascadelake
 
+module load R && module load nodejs && module load anaconda3 ;
 conda init bash
 conda activate farbod
-module load R && module load nodejs && module load anaconda3 ;
 conda activate farbod
 cd /work/postresearch/Shared/Projects/Farbod/CaseMix ;
 Rscript /work/postresearch/Shared/Projects/Farbod/CaseMix/calculations_sbatch.r
