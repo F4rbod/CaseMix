@@ -8,7 +8,6 @@
 #SBATCH --mem=178G
 #SBATCH --export=ALL
 #SBATCH --constraint=cascadelake
-#SBATCH --pty /bin/bash
 
 conda init bash
 conda activate farbod
