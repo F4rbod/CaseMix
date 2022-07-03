@@ -8,6 +8,7 @@
 #SBATCH --mem=178G
 #SBATCH --export=ALL
 
+conda init bash
 conda activate farbod
 module load R && module load nodejs && module load anaconda3 ;
 conda activate farbod
