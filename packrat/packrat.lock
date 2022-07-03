@@ -1,0 +1,495 @@
+PackratFormat: 1.4
+PackratVersion: 0.8.1
+RVersion: 4.2.0
+Repos: CRAN=https://cloud.r-project.org
+
+Package: DBI
+Source: CRAN
+Version: 1.1.3
+
+Package: R6
+Source: CRAN
+Version: 2.5.1
+
+Package: RColorBrewer
+Source: CRAN
+Version: 1.1-3
+
+Package: Rcpp
+Source: CRAN
+Version: 1.0.8.3
+
+Package: askpass
+Source: CRAN
+Version: 1.1
+Requires: sys
+
+Package: assertthat
+Source: CRAN
+Version: 0.2.1
+
+Package: backports
+Source: CRAN
+Version: 1.4.1
+
+Package: base64enc
+Source: CRAN
+Version: 0.1-3
+
+Package: bit
+Source: CRAN
+Version: 4.0.4
+
+Package: bit64
+Source: CRAN
+Version: 4.0.5
+Requires: bit
+
+Package: blob
+Source: CRAN
+Version: 1.2.3
+Requires: rlang, vctrs
+
+Package: broom
+Source: CRAN
+Version: 1.0.0
+Requires: backports, glue, rlang, dplyr, ellipsis, generics, ggplot2,
+    purrr, stringr, tibble, tidyr
+
+Package: bslib
+Source: CRAN
+Version: 0.3.1
+Requires: rlang, htmltools, jquerylib, jsonlite, sass
+
+Package: callr
+Source: CRAN
+Version: 3.7.0
+Requires: R6, processx
+
+Package: cellranger
+Source: CRAN
+Version: 1.1.0
+Requires: tibble, rematch
+
+Package: checkmate
+Source: CRAN
+Version: 2.1.0
+Requires: backports
+
+Package: cli
+Source: CRAN
+Version: 3.3.0
+Requires: glue
+
+Package: clipr
+Source: CRAN
+Version: 0.8.0
+
+Package: colorspace
+Source: CRAN
+Version: 2.0-3
+
+Package: comorbidity
+Source: CRAN
+Version: 1.0.2
+Requires: checkmate, stringi, data.table
+
+Package: cpp11
+Source: CRAN
+Version: 0.4.2
+
+Package: crayon
+Source: CRAN
+Version: 1.5.1
+
+Package: curl
+Source: CRAN
+Version: 4.3.2
+
+Package: data.table
+Source: CRAN
+Version: 1.14.2
+
+Package: dbplyr
+Source: CRAN
+Version: 2.2.1
+Requires: DBI, R6, assertthat, blob, cli, dplyr, glue, lifecycle,
+    magrittr, pillar, purrr, rlang, tibble, tidyselect, vctrs, withr
+
+Package: digest
+Source: CRAN
+Version: 0.6.29
+
+Package: dplyr
+Source: CRAN
+Version: 1.0.9
+Requires: glue, rlang, vctrs, R6, generics, lifecycle, magrittr,
+    pillar, tibble, tidyselect
+
+Package: dtplyr
+Source: CRAN
+Version: 1.2.1
+Requires: crayon, data.table, dplyr, ellipsis, glue, lifecycle, rlang,
+    tibble, tidyselect, vctrs
+
+Package: ellipsis
+Source: CRAN
+Version: 0.3.2
+Requires: rlang
+
+Package: evaluate
+Source: CRAN
+Version: 0.15
+
+Package: fansi
+Source: CRAN
+Version: 1.0.3
+
+Package: farver
+Source: CRAN
+Version: 2.1.0
+
+Package: fastmap
+Source: CRAN
+Version: 1.1.0
+
+Package: forcats
+Source: CRAN
+Version: 0.5.1
+Requires: ellipsis, magrittr, rlang, tibble
+
+Package: fs
+Source: CRAN
+Version: 1.5.2
+
+Package: fst
+Source: CRAN
+Version: 0.9.8
+Requires: Rcpp, fstcore
+
+Package: fstcore
+Source: CRAN
+Version: 0.9.12
+Requires: Rcpp
+
+Package: gargle
+Source: CRAN
+Version: 1.2.0
+Requires: cli, fs, glue, jsonlite, rappdirs, rlang, withr, httr,
+    rstudioapi
+
+Package: generics
+Source: CRAN
+Version: 0.1.2
+
+Package: ggplot2
+Source: CRAN
+Version: 3.3.6
+Requires: glue, rlang, tibble, digest, gtable, isoband, scales, withr
+
+Package: glue
+Source: CRAN
+Version: 1.6.2
+
+Package: googledrive
+Source: CRAN
+Version: 2.0.0
+Requires: cli, gargle, glue, httr, jsonlite, lifecycle, magrittr,
+    pillar, purrr, rlang, tibble, vctrs, withr, uuid
+
+Package: googlesheets4
+Source: CRAN
+Version: 1.0.0
+Requires: cellranger, cli, curl, gargle, glue, googledrive, httr,
+    magrittr, purrr, rlang, tibble, vctrs, ids, rematch2
+
+Package: gtable
+Source: CRAN
+Version: 0.3.0
+
+Package: haven
+Source: CRAN
+Version: 2.5.0
+Requires: cli, cpp11, forcats, lifecycle, rlang, tibble, tidyselect,
+    vctrs, hms, readr
+
+Package: highr
+Source: CRAN
+Version: 0.9
+Requires: xfun
+
+Package: hms
+Source: CRAN
+Version: 1.1.1
+Requires: ellipsis, lifecycle, pkgconfig, rlang, vctrs
+
+Package: htmltools
+Source: CRAN
+Version: 0.5.2
+Requires: base64enc, digest, rlang, fastmap
+
+Package: httr
+Source: CRAN
+Version: 1.4.3
+Requires: R6, curl, jsonlite, mime, openssl
+
+Package: ids
+Source: CRAN
+Version: 1.0.1
+Requires: openssl, uuid
+
+Package: isoband
+Source: CRAN
+Version: 0.2.5
+
+Package: jquerylib
+Source: CRAN
+Version: 0.1.4
+Requires: htmltools
+
+Package: jsonlite
+Source: CRAN
+Version: 1.8.0
+
+Package: knitr
+Source: CRAN
+Version: 1.39
+Requires: evaluate, highr, stringr, xfun, yaml
+
+Package: labeling
+Source: CRAN
+Version: 0.4.2
+
+Package: lifecycle
+Source: CRAN
+Version: 1.0.1
+Requires: glue, rlang
+
+Package: lubridate
+Source: CRAN
+Version: 1.8.0
+Requires: cpp11, generics
+
+Package: magrittr
+Source: CRAN
+Version: 2.0.3
+
+Package: mime
+Source: CRAN
+Version: 0.12
+
+Package: modelr
+Source: CRAN
+Version: 0.1.8
+Requires: broom, magrittr, purrr, rlang, tibble, tidyr, tidyselect,
+    vctrs
+
+Package: munsell
+Source: CRAN
+Version: 0.5.0
+Requires: colorspace
+
+Package: openssl
+Source: CRAN
+Version: 2.0.2
+Requires: askpass
+
+Package: packrat
+Source: CRAN
+Version: 0.8.1
+Hash: 502257b0c1ef1db0274ea5ecdec3c9ab
+
+Package: pillar
+Source: CRAN
+Version: 1.7.0
+Requires: cli, glue, lifecycle, rlang, vctrs, crayon, ellipsis, fansi,
+    utf8
+
+Package: pkgconfig
+Source: CRAN
+Version: 2.0.3
+
+Package: plyr
+Source: CRAN
+Version: 1.8.7
+Requires: Rcpp
+
+Package: prettyunits
+Source: CRAN
+Version: 1.1.1
+
+Package: processx
+Source: CRAN
+Version: 3.6.1
+Requires: R6, ps
+
+Package: progress
+Source: CRAN
+Version: 1.2.2
+Requires: R6, crayon, hms, prettyunits
+
+Package: ps
+Source: CRAN
+Version: 1.7.1
+
+Package: purrr
+Source: CRAN
+Version: 0.3.4
+Requires: magrittr, rlang
+
+Package: rappdirs
+Source: CRAN
+Version: 0.3.3
+
+Package: readr
+Source: CRAN
+Version: 2.1.2
+Requires: R6, cli, clipr, cpp11, crayon, hms, lifecycle, rlang, tibble,
+    tzdb, vroom
+
+Package: readxl
+Source: CRAN
+Version: 1.4.0
+Requires: cellranger, cpp11, progress, tibble
+
+Package: rematch
+Source: CRAN
+Version: 1.0.1
+
+Package: rematch2
+Source: CRAN
+Version: 2.1.2
+Requires: tibble
+
+Package: reprex
+Source: CRAN
+Version: 2.0.1
+Requires: callr, cli, clipr, fs, glue, knitr, rlang, rstudioapi, withr,
+    rmarkdown
+
+Package: reshape
+Source: CRAN
+Version: 0.8.9
+Requires: plyr
+
+Package: rlang
+Source: CRAN
+Version: 1.0.3
+
+Package: rmarkdown
+Source: CRAN
+Version: 2.14
+Requires: bslib, evaluate, htmltools, jquerylib, jsonlite, knitr,
+    stringr, xfun, yaml, tinytex
+
+Package: rstudioapi
+Source: CRAN
+Version: 0.13
+
+Package: rvest
+Source: CRAN
+Version: 1.0.2
+Requires: httr, lifecycle, magrittr, rlang, tibble, selectr, xml2
+
+Package: sass
+Source: CRAN
+Version: 0.4.1
+Requires: R6, htmltools, rlang, fs, rappdirs
+
+Package: scales
+Source: CRAN
+Version: 1.2.0
+Requires: R6, lifecycle, rlang, RColorBrewer, farver, labeling,
+    munsell, viridisLite
+
+Package: selectr
+Source: CRAN
+Version: 0.4-2
+Requires: R6, stringr
+
+Package: stringi
+Source: CRAN
+Version: 1.7.6
+
+Package: stringr
+Source: CRAN
+Version: 1.4.0
+Requires: glue, magrittr, stringi
+
+Package: sys
+Source: CRAN
+Version: 3.4
+
+Package: tibble
+Source: CRAN
+Version: 3.1.7
+Requires: ellipsis, fansi, lifecycle, magrittr, pillar, rlang, vctrs,
+    pkgconfig
+
+Package: tidyr
+Source: CRAN
+Version: 1.2.0
+Requires: dplyr, ellipsis, glue, lifecycle, magrittr, purrr, rlang,
+    tibble, tidyselect, vctrs, cpp11
+
+Package: tidyselect
+Source: CRAN
+Version: 1.1.2
+Requires: ellipsis, glue, rlang, vctrs, purrr
+
+Package: tidyverse
+Source: CRAN
+Version: 1.3.1
+Requires: broom, cli, crayon, dbplyr, dplyr, dtplyr, forcats, ggplot2,
+    googledrive, googlesheets4, haven, hms, httr, jsonlite, lubridate,
+    magrittr, modelr, pillar, purrr, readr, readxl, reprex, rlang,
+    rstudioapi, rvest, stringr, tibble, tidyr, xml2
+
+Package: tinytex
+Source: CRAN
+Version: 0.40
+Requires: xfun
+
+Package: tzdb
+Source: CRAN
+Version: 0.3.0
+Requires: cpp11
+
+Package: utf8
+Source: CRAN
+Version: 1.2.2
+
+Package: uuid
+Source: CRAN
+Version: 1.1-0
+
+Package: vctrs
+Source: CRAN
+Version: 0.4.1
+Requires: rlang, cli, glue
+
+Package: viridisLite
+Source: CRAN
+Version: 0.4.0
+
+Package: vroom
+Source: CRAN
+Version: 1.5.7
+Requires: bit64, cli, cpp11, crayon, glue, hms, lifecycle, rlang,
+    tibble, tidyselect, tzdb, vctrs, withr, progress
+
+Package: withr
+Source: CRAN
+Version: 2.5.0
+
+Package: xfun
+Source: CRAN
+Version: 0.31
+
+Package: xml2
+Source: CRAN
+Version: 1.3.3
+
+Package: yaml
+Source: CRAN
+Version: 2.3.5
