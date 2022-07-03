@@ -2,17 +2,17 @@ options(repr.matrix.max.rows=100, repr.matrix.max.cols=300)
 options(repr.plot.width = 20, repr.plot.height = 15)
 options(width=300)
 
-numcores=110
+numcores=88
 
 install.packages("tidyverse")
 install.packages("data.table")
 install.packages("fst")
-#install.packages("comorbidity")
+install.packages("comorbidity")
 install.packages("reshape")
 install.packages("dtplyr")
 install.packages("haven")
 install.packages("vroom")
-#install.packages("dplyr")
+install.packages("dplyr")
 
 
 
