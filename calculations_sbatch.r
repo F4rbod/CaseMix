@@ -84,7 +84,7 @@ arthritis_icd_10_codes=c("M05","M06","M07","M08","M09","M10","M11","M12","M13","
 carrier_data_all_years = read_fst(
     "/work/postresearch/Shared/Projects/Farbod/carrier_data_all_years.fst", as.data.table = T)
 mbsf_data = read_fst(
-  "/work/postresearch/Shared/Projects/Data_fst/mbsf_data", as.data.table = T)
+  "/work/postresearch/Shared/Projects/Farbod/CaseMix/mbsf_data_long.fst", as.data.table = T)
 
 
 
