@@ -387,6 +387,10 @@ tail(physician_integration_stats)
 
 
 
+write.fst(physician_integration_stats,"physician_integration_stats_before_join.fst")
+write.fst(summary_with_npi,"summary_with_npi_before_join.fst")
+
+
 
 
 
