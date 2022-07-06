@@ -6,7 +6,7 @@ options(repr.matrix.max.rows=100, repr.matrix.max.cols=300)
 options(repr.plot.width = 20, repr.plot.height = 15)
 options(width=300)
 
-numcores=128
+numcores=28
 
 #install.packages("tidyverse")
 #install.packages("data.table")
@@ -279,12 +279,12 @@ add_patient_NPI=function(data, summary_data, time_frame = 365){
   summary_data = left_join(
     summary_data,
     most_common_physician,
-    by = c("DESY_SORT_KEY" = "most_common_physician_DESY_SORT_KEY")
+    by = c("DESY_SORT_KEY" = "most_common_physician_DESY_SORT_KEY" , "year" = "most_common_physician_year")
   )
   summary_data = left_join(
     summary_data,
     most_common_primary_care_physician,
-    by = c("DESY_SORT_KEY" = "most_common_primary_care_physician_DESY_SORT_KEY")
+    by = c("DESY_SORT_KEY" = "most_common_primary_care_physician_DESY_SORT_KEY" , "year" = "most_common_primary_care_physician_year")
   )%>%
   as.data.table()
 
@@ -292,6 +292,7 @@ add_patient_NPI=function(data, summary_data, time_frame = 365){
 
 summary_with_npi=add_patient_NPI(data = carrier_data_all_years, summary_data = summary_with_patient_characteristics)
 head(summary_with_npi)
+
 
 
 
@@ -387,8 +388,7 @@ tail(physician_integration_stats)
 
 
 
-write.fst(physician_integration_stats,"physician_integration_stats_before_join.fst")
-write.fst(summary_with_npi,"summary_with_npi_before_join.fst")
+
 
 
 
