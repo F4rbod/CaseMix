@@ -6,7 +6,7 @@ options(repr.matrix.max.rows=100, repr.matrix.max.cols=300)
 options(repr.plot.width = 20, repr.plot.height = 15)
 options(width=300)
 
-numcores=28
+numcores=10
 
 #install.packages("tidyverse")
 #install.packages("data.table")
@@ -86,8 +86,8 @@ carrier_data_all_years = read_fst(
 mbsf_data = read_fst(
   "/work/postresearch/Shared/Projects/Farbod/CaseMix/mbsf_data_long.fst", as.data.table = T)
 
-
-
+head(carrier_data_all_years)
+head(mbsf_data)
 
 
 
@@ -159,6 +159,7 @@ head(yearly_patient_conditions_carrier)
 
 
 
+
 summarise_carrier = function(data, time_frame = 365){
   
   data%>%
@@ -204,6 +205,9 @@ head(summary_patient_by_year)
 
 
 
+
+mbsf_data[,DESY_SORT_KEY := as.integer(DESY_SORT_KEY)]
+
 add_patient_characteristics = function(mbsf_data,summary_data){
   require(dtplyr)
   require(lubridate)
@@ -212,13 +216,15 @@ add_patient_characteristics = function(mbsf_data,summary_data){
   
   data %>%
   mutate(
-    year_of_death=substr(DATE_OF_DEATH,0,4)
+    year_of_death=substr(date_died,0,4)
   )%>%
   as.data.table()
 }
 
 summary_with_patient_characteristics=add_patient_characteristics(mbsf_data,summary_patient_by_year)
 head(summary_with_patient_characteristics)
+write.fst(summary_with_patient_characteristics,"summary_with_patient_characteristics_before_join.fst")
+write.fst(summary_patient_by_year,"summary_patient_by_year_before_join.fst")
 
 
 
@@ -292,6 +298,7 @@ add_patient_NPI=function(data, summary_data, time_frame = 365){
 
 summary_with_npi=add_patient_NPI(data = carrier_data_all_years, summary_data = summary_with_patient_characteristics)
 head(summary_with_npi)
+write.fst(summary_with_npi,"summary_with_npi_before_join.fst")
 
 
 
@@ -394,7 +401,6 @@ tail(physician_integration_stats)
 
 
 
-
 #rename columns
 rename_last = function(data, how_many, new_names) {
   total_cols = ncol(data)
@@ -460,7 +466,11 @@ summary_with_physician_integration_stats=add_integration_status(data = summary_w
 
 
 
-head(summary_with_physician_integration_stats)
 
+
+
+
+
+head(summary_with_physician_integration_stats)
 
 write.fst(summary_with_physician_integration_stats,"calculation_results.fst")
