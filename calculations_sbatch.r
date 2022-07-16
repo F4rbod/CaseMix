@@ -85,6 +85,7 @@ carrier_data_all_years = read_fst(
     "/work/postresearch/Shared/Projects/Farbod/carrier_data_all_years.fst", as.data.table = T)
 mbsf_data = read_fst(
   "/work/postresearch/Shared/Projects/Farbod/CaseMix/mbsf_data_long.fst", as.data.table = T)
+mbsf_data=unique(mbsf_data)
 
 head(carrier_data_all_years)
 head(mbsf_data)
