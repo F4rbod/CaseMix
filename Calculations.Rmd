@@ -33,18 +33,12 @@ packrat::init("/work/postresearch/Shared/Projects/Farbod/CaseMix/")
 packrat::clean()
 ```
 
-```{r}
+```{r jupyter={'outputs_hidden': True}, tags=c()}
 packrat::restore(overwrite.dirty = TRUE)
 ```
 
 ```{r}
 packrat::status()
-```
-
-```{r}
-install.packages("jsonlite")
-install.packages("caTools")
-
 ```
 
 ```{r}
