@@ -26,11 +26,25 @@ We'll load the needed libraries:
 ```
 
 ```{r}
-packrat::init()
+packrat::init("/work/postresearch/Shared/Projects/Farbod/CaseMix/")
+```
+
+```{r}
+packrat::clean()
+```
+
+```{r}
+packrat::restore(overwrite.dirty = TRUE)
 ```
 
 ```{r}
 packrat::status()
+```
+
+```{r}
+install.packages("jsonlite")
+install.packages("caTools")
+
 ```
 
 ```{r}
