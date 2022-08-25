@@ -21,8 +21,16 @@ We'll load the needed libraries:
 <!-- #endregion -->
 
 ```{r}
-library(styler)
-styler::style_file(path = "Calculations.Rmd")
+#library(styler)
+#styler::style_file(path = "Calculations.Rmd")
+```
+
+```{r}
+packrat::init()
+```
+
+```{r}
+packrat::status()
 ```
 
 ```{r}
@@ -99,7 +107,7 @@ sex_codes <- data.frame(
 )
 ```
 
-<!-- #region tags=[] toc-hr-collapsed=true -->
+<!-- #region tags=[] toc-hr-collapsed=true jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true -->
 # Patient level calculations
 <!-- #endregion -->
 
@@ -680,7 +688,7 @@ write.fst(summary_with_physician_integration_stats, "summary_with_physician_inte
 summary_with_npi[DESY_SORT_KEY == "100005325"]
 ```
 
-<!-- #region tags=[] -->
+<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
 # Comparisons and analyses
 <!-- #endregion -->
 
@@ -849,239 +857,72 @@ head(yearly_calculations, 20)
 write_fst(yearly_calculations, "yearly_calculations_cleaned.fst")
 ```
 
-# Read cleaned results
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
+# Add MDPPAS
+<!-- #endregion -->
+
+## Read from SAS file and convert to fst
+
+```{r tags=c()}
+library(haven)
+mdppas_data=read_sas(
+  data_file=
+  "/work/postresearch/Shared/Data_raw/Medicare/MDPPAS/mdppas0819.sas7bdat")
+```
+
+```{r}
+head(mdppas_data)
+```
+
+```{r}
+write_fst(x = mdppas_data, path = "/work/postresearch/Shared/Data_raw/Medicare/MDPPAS/mdppas.fst" , compress = 0)
+```
+
+<!-- #region tags=[] -->
+## Read from fst
+<!-- #endregion -->
+
+```{r}
+mdppas_data <-
+read_fst(path = "/work/postresearch/Shared/Data_raw/Medicare/MDPPAS/mdppas.fst" , as.data.table = T)
+```
+
+```{r}
+head(mdppas_data)
+```
+
+## Add to calculations and integration stats
 
 ```{r}
 yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
 ```
 
 ```{r}
-yearly_calculations[DESY_SORT_KEY == "100005325"]
-```
-
-```{r}
+yearly_calculations <-
+left_join(yearly_calculations,mdppas_data,
+          by = c("most_common_primary_care_physician_PRF_PHYSN_NPI" = "npi" , "year" = "year")) %>% as.data.table()
 head(yearly_calculations)
 ```
 
-# Comparison functions
-
 ```{r}
-comparator_averages <- function(data, specialty, integration_threshold = 0.75, independece_threshold = 0.75) {
-  require(tidyverse)
-  require(dtplyr)
-  varname <- paste(specialty, "_in_facility_non_exclusive_HCPCS_prp", sep = "")
-  looking_for <- paste(specialty, "_PRF_PHYSN_NPI", sep = "")
-
-
-  result <- data %>%
-    mutate(
-      integration_status =
-        case_when(
-          !!rlang::sym(varname) < independece_threshold ~ paste("Independent ", specialty, sep = ""),
-          !!rlang::sym(varname) >= integration_threshold ~ paste("Integrated ", specialty, sep = ""),
-          !!rlang::sym(varname) > independece_threshold &
-            !!rlang::sym(varname) < integration_threshold ~ paste("Switching ", specialty, sep = ""),
-          TRUE ~ paste("Missing ", specialty, sep = "")
-        ),
-    ) %>%
-    group_by(integration_status) %>%
-    summarise(
-      n = n(),
-      N_distinct_patients = length(unique(DESY_SORT_KEY)),
-      N_distinct_specialist = length(unique(!!rlang::sym(looking_for))),
-      Male = mean(sex == "Male", na.rm = T),
-      Female = mean(sex == "Female", na.rm = T),
-      Asian = mean(race == "Asian", na.rm = T),
-      Black = mean(race == "Black", na.rm = T),
-      Hispanic = mean(race == "Hispanic", na.rm = T),
-      North_American_Native = mean(race == "North American Native", na.rm = T),
-      White = mean(race == "White", na.rm = T),
-      Other_race = mean(race == "Other", na.rm = T),
-      avg_age = mean(AGE, na.rm = T),
-      age_65_74 = mean(na.rm = T, age_group == "65-74"),
-      age_75_84 = mean(na.rm = T, age_group == "75-84"),
-      age_85_plus = mean(na.rm = T, age_group == "85+"),
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
-      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
-      primary_care_physician_integrated =
-        sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
-      most_common_physician_integrated =
-        sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
+write_fst(x = yearly_calculations,"yearly_calculations_cleaned_with_mdppas.fst", compress = 0)
 ```
 
 ```{r}
-comparator_tests <- function(data, specialty, integration_threshold = 0.75, independece_threshold = 0.75) {
-  require(tidyverse)
-  require(dtplyr)
-  varname <- paste(specialty, "_in_facility_non_exclusive_HCPCS_prp", sep = "")
-  looking_for <- paste(specialty, "_PRF_PHYSN_NPI", sep = "")
-
-
-  result <- data %>%
-    mutate(
-      integration_status =
-        case_when(
-          !!rlang::sym(varname) < independece_threshold ~ paste("Independent ", specialty, sep = ""),
-          !!rlang::sym(varname) >= integration_threshold ~ paste("Integrated ", specialty, sep = "")
-        ),
-    ) %>%
-    summarise(
-      Male = chisq.test(sex == "Male", integration_status)$p.value,
-      Female = chisq.test(sex == "Female", integration_status)$p.value,
-      Asian = chisq.test(race == "Asian", integration_status)$p.value,
-      Black = chisq.test(race == "Black", integration_status)$p.value,
-      Hispanic = chisq.test(race == "Hispanic", integration_status)$p.value,
-      North_American_Native = chisq.test(race == "North American Native", integration_status)$p.value,
-      White = chisq.test(race == "White", integration_status)$p.value,
-      Other_race = chisq.test(race == "Other", integration_status)$p.value,
-      avg_age = t.test(AGE ~ integration_status, data = .)$p.value,
-      age_65_74 = chisq.test(age_group == "65-74", integration_status)$p.value,
-      age_75_84 = chisq.test(age_group == "75-84", integration_status)$p.value,
-      age_85_plus = chisq.test(age_group == "85+", integration_status)$p.value,
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = chisq.test(RUCC_2013 > 3, integration_status)$p.value,
-      urban_prp = chisq.test(RUCC_2013 <= 3, integration_status)$p.value,
-      hypertension = chisq.test(hypertension, integration_status)$p.value,
-      arthritis = chisq.test(arthritis, integration_status)$p.value,
-      IHD = chisq.test(IHD, integration_status)$p.value,
-      diabetes = chisq.test(diabetes, integration_status)$p.value,
-      depression = chisq.test(depression, integration_status)$p.value,
-      two_conditions = chisq.test(number_of_conditions == 2, integration_status)$p.value,
-      more_than_two_conditions = chisq.test(number_of_conditions > 2, integration_status)$p.value,
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-primary_care_physician_comparisons_test <-
-  comparator_tests(yearly_calculations, "most_common_primary_care_physician", integration_threshold = 0.75, independece_threshold = 0.75)
-```
-
-```{r}
-primary_care_physician_comparisons_test
-```
-
-```{r}
-primary_care_physician_comparisons_averages <-
-  comparator_averages(yearly_calculations, "most_common_primary_care_physician", integration_threshold = 0.75, independece_threshold = 0.75)
-
-primary_care_physician_comparisons_test <-
-  comparator_tests(yearly_calculations, "most_common_primary_care_physician", integration_threshold = 0.75, independece_threshold = 0.75)
-
-comparison_results_primary_care_physician <- rbind(
-  primary_care_physician_comparisons_averages,
-  primary_care_physician_comparisons_test,
-  fill = TRUE
-)
-```
-
-```{r}
-comparison_results_primary_care_physician
-```
-
-```{r}
-t(comparison_results_primary_care_physician)
-```
-
-# Overall results
-
-```{r}
-overall_averages <- function(data, specialty, integration_threshold = 0.75, independece_threshold = 0.75) {
-  require(tidyverse)
-  require(dtplyr)
-  varname <- paste(specialty, "_in_facility_non_exclusive_HCPCS_prp", sep = "")
-  looking_for <- paste(specialty, "_PRF_PHYSN_NPI", sep = "")
-
-
-  result <- data %>%
-    summarise(
-      n = n(),
-      N_distinct_patients = length(unique(DESY_SORT_KEY)),
-      N_distinct_specialist = length(unique(!!rlang::sym(looking_for))),
-      Male = mean(sex == "Male", na.rm = T),
-      Female = mean(sex == "Female", na.rm = T),
-      Asian = mean(race == "Asian", na.rm = T),
-      Black = mean(race == "Black", na.rm = T),
-      Hispanic = mean(race == "Hispanic", na.rm = T),
-      North_American_Native = mean(race == "North American Native", na.rm = T),
-      White = mean(race == "White", na.rm = T),
-      Other_race = mean(race == "Other", na.rm = T),
-      avg_age = mean(AGE, na.rm = T),
-      age_65_74 = mean(na.rm = T, age_group == "65-74"),
-      age_75_84 = mean(na.rm = T, age_group == "75-84"),
-      age_85_plus = mean(na.rm = T, age_group == "85+"),
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
-      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
-      primary_care_physician_integrated =
-        sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
-      most_common_physician_integrated =
-        sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-primary_care_physician_overall_averages <-
-  overall_averages(yearly_calculations, "most_common_primary_care_physician")
-```
-
-```{r}
-t(primary_care_physician_overall_averages)
-```
-
-# Finding changes in physician patient pools
-
-```{r}
-yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
 physician_integration_stats <- read.fst("./physician_integration_stats_before_join.fst", as.data.table = T)
 ```
 
 ```{r}
-head(yearly_calculations)
-head(physician_integration_stats)
+physician_integration_stats <-
+left_join(physician_integration_stats,mdppas_data,
+          by = c("PRF_PHYSN_NPI" = "npi" , "year" = "year")) %>% as.data.table()
 ```
+
+```{r}
+physician_integration_stats[PRF_PHYSN_NPI==1770514119]
+```
+
+# Finding changes in physician patient pools
 
 ```{r}
 physician_integration_change_finder <- function(data, integration_threshold = 0.75, independece_threshold = 0.75) {
@@ -1090,7 +931,7 @@ physician_integration_change_finder <- function(data, integration_threshold = 0.
 
   result <- data %>%
     mutate(
-      integrated = in_facility_non_exclusive_HCPCS_prp >= integration_threshold
+      integrated = (in_facility_non_exclusive_HCPCS_prp >= integration_threshold | vikeyword==1)
     ) %>%
     group_by(PRF_PHYSN_NPI) %>%
     mutate(
@@ -1161,20 +1002,29 @@ yearly_calculations <- yearly_calculations %>%
 ```
 
 ```{r}
-write.fst(yearly_calculations, "yearly_calculations_with_integration_changes.fst")
-```
-
-## Summarizing
-
-
-### Reading the data with integration changes
-
-```{r}
-yearly_calculations <- read_fst("yearly_calculations_with_integration_changes.fst", as.data.table = T)
 head(yearly_calculations)
 ```
 
-### Summary function
+```{r}
+write.fst(yearly_calculations, "yearly_calculations_with_integration_changes_mdppas.fst")
+```
+
+## Patient pool changes
+
+<!-- #region tags=[] -->
+### Read cleaned results
+<!-- #endregion -->
+
+```{r}
+#yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+### Summarize Changes
 
 ```{r}
 integration_change_summarizer <- function(data) {
@@ -1322,6 +1172,201 @@ ggplot_arthritis_depression_more_than_two_rdd <-
   geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions", fill = "more_than_two_conditions", group = before))
 
 ggsave(ggplot_arthritis_depression_more_than_two_rdd, filename = "ggplot_arthritis_depression_more_than_two_rdd.pdf", width = 12, height = 7)
+```
+
+# Comparisons based on integration status
+
+<!-- #region tags=[] -->
+## Read cleaned results
+<!-- #endregion -->
+
+```{r}
+#yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+<!-- #region tags=[] -->
+## Comparison functions
+<!-- #endregion -->
+
+```{r}
+comparator_averages <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  result <- data %>%
+    group_by(most_common_primary_care_physician_integrated) %>%
+    summarise(
+      n = n(),
+      N_distinct_patients = length(unique(DESY_SORT_KEY)),
+      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
+      Male = mean(sex == "Male", na.rm = T),
+      Female = mean(sex == "Female", na.rm = T),
+      Asian = mean(race == "Asian", na.rm = T),
+      Black = mean(race == "Black", na.rm = T),
+      Hispanic = mean(race == "Hispanic", na.rm = T),
+      North_American_Native = mean(race == "North American Native", na.rm = T),
+      White = mean(race == "White", na.rm = T),
+      Other_race = mean(race == "Other", na.rm = T),
+      avg_age = mean(AGE, na.rm = T),
+      age_65_74 = mean(na.rm = T, age_group == "65-74"),
+      age_75_84 = mean(na.rm = T, age_group == "75-84"),
+      age_85_plus = mean(na.rm = T, age_group == "85+"),
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
+      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
+      #primary_care_physician_integrated =
+      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
+      #most_common_physician_integrated =
+      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+comparator_tests <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+  result <- data %>%
+    mutate(
+      integration_status = most_common_primary_care_physician_integrated
+        ) %>%
+    summarise(
+      Male = chisq.test(sex == "Male", integration_status)$p.value,
+      Female = chisq.test(sex == "Female", integration_status)$p.value,
+      Asian = chisq.test(race == "Asian", integration_status)$p.value,
+      Black = chisq.test(race == "Black", integration_status)$p.value,
+      Hispanic = chisq.test(race == "Hispanic", integration_status)$p.value,
+      North_American_Native = chisq.test(race == "North American Native", integration_status)$p.value,
+      White = chisq.test(race == "White", integration_status)$p.value,
+      Other_race = chisq.test(race == "Other", integration_status)$p.value,
+      avg_age = t.test(AGE ~ integration_status, data = .)$p.value,
+      age_65_74 = chisq.test(age_group == "65-74", integration_status)$p.value,
+      age_75_84 = chisq.test(age_group == "75-84", integration_status)$p.value,
+      age_85_plus = chisq.test(age_group == "85+", integration_status)$p.value,
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = chisq.test(RUCC_2013 > 3, integration_status)$p.value,
+      urban_prp = chisq.test(RUCC_2013 <= 3, integration_status)$p.value,
+      hypertension = chisq.test(hypertension, integration_status)$p.value,
+      arthritis = chisq.test(arthritis, integration_status)$p.value,
+      IHD = chisq.test(IHD, integration_status)$p.value,
+      diabetes = chisq.test(diabetes, integration_status)$p.value,
+      depression = chisq.test(depression, integration_status)$p.value,
+      two_conditions = chisq.test(number_of_conditions == 2, integration_status)$p.value,
+      more_than_two_conditions = chisq.test(number_of_conditions > 2, integration_status)$p.value,
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+overall_averages <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  result <- data %>%
+    summarise(
+      n = n(),
+      N_distinct_patients = length(unique(DESY_SORT_KEY)),
+      N_distinct_specialist = length(unique(primary_care_physician_comparisons_test)),
+      Male = mean(sex == "Male", na.rm = T),
+      Female = mean(sex == "Female", na.rm = T),
+      Asian = mean(race == "Asian", na.rm = T),
+      Black = mean(race == "Black", na.rm = T),
+      Hispanic = mean(race == "Hispanic", na.rm = T),
+      North_American_Native = mean(race == "North American Native", na.rm = T),
+      White = mean(race == "White", na.rm = T),
+      Other_race = mean(race == "Other", na.rm = T),
+      avg_age = mean(AGE, na.rm = T),
+      age_65_74 = mean(na.rm = T, age_group == "65-74"),
+      age_75_84 = mean(na.rm = T, age_group == "75-84"),
+      age_85_plus = mean(na.rm = T, age_group == "85+"),
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
+      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
+      #primary_care_physician_integrated =
+      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
+      #most_common_physician_integrated =
+      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+primary_care_physician_comparisons_averages <-
+  comparator_averages(yearly_calculations)
+
+primary_care_physician_comparisons_test <-
+  comparator_tests(yearly_calculations)
+
+primary_care_physician_overall_averages <-
+  overall_averages(yearly_calculations)
+```
+
+```{r}
+primary_care_physician_comparisons_averages
+```
+
+```{r}
+primary_care_physician_comparisons_test
+```
+
+```{r}
+primary_care_physician_overall_averages
+```
+
+```{r}
+comparison_results_primary_care_physician <- rbind(
+  primary_care_physician_overall_averages,
+  primary_care_physician_comparisons_averages,
+  primary_care_physician_comparisons_test,
+  fill = TRUE
+)
+t(comparison_results_primary_care_physician)
 ```
 
 ```{r}
