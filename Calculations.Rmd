@@ -838,22 +838,6 @@ yearly_calculations <- data_for_modelling_filter(yearly_calculations)
 length(yearly_calculations$DESY_SORT_KEY)
 ```
 
-## Counting number of conditions
-
-```{r}
-yearly_calculations[, number_of_conditions := sum(hypertension, arthritis, IHD, diabetes, depression, na.rm = T), ,
-  by = 1:nrow(yearly_calculations)
-]
-```
-
-```{r}
-head(yearly_calculations, 20)
-```
-
-```{r}
-write_fst(yearly_calculations, "yearly_calculations_cleaned.fst")
-```
-
 <!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true tags=[] -->
 # Add MDPPAS
 <!-- #endregion -->
@@ -1057,600 +1041,15 @@ head(yearly_calculations)
 write.fst(yearly_calculations, "yearly_calculations_with_integration_changes_mdppas.fst")
 ```
 
-## Patient pool changes
-
-<!-- #region tags=[] -->
-### Read cleaned results
-<!-- #endregion -->
-
-```{r}
-# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
-yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
-```
-
-```{r}
-yearly_calculations[DESY_SORT_KEY == "100005325"]
-```
-
-<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
-### Summarize Changes
-<!-- #endregion -->
-
-```{r}
-integration_change_summarizer <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-  result <-
-    data %>%
-    filter(!is.na(most_common_primary_care_physician_years_from_integration)) %>%
-    group_by(most_common_primary_care_physician_years_from_integration) %>%
-    summarise(
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T)
-    ) %>%
-    as.data.table()
-}
-```
-
-```{r}
-integration_changes_years_to_integration <- integration_change_summarizer(yearly_calculations)
-```
-
-```{r}
-integration_changes_years_to_integration
-```
-
-```{r}
-ggplot_all_variables <- ggplot(data = integration_changes_years_to_integration) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence")
-
-ggsave(ggplot_all_variables, filename = "ggplot_all_variables.pdf", width = 12, height = 7)
-```
-
-```{r}
-ggplot_arthritis_depression_more_than_two <- ggplot(data = integration_changes_years_to_integration) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence")
-
-ggsave(ggplot_arthritis_depression_more_than_two, filename = "ggplot_arthritis_depression_more_than_two.pdf", width = 12, height = 7)
-```
-
-```{r}
-ggplot_IHD_diabetes_two_conditions <- ggplot(data = integration_changes_years_to_integration) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence")
-
-ggsave(ggplot_IHD_diabetes_two_conditions, filename = "ggplot_IHD_diabetes_two_conditions.pdf", width = 12, height = 7)
-```
-
-```{r}
-ggplot_hypertension_rdd <- ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence") +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension", fill = "hypertension", group = before))
-
-
-
-ggsave(ggplot_hypertension_rdd, filename = "ggplot_hypertension_rdd.pdf", width = 12, height = 7)
-```
-
-```{r}
-ggplot_IHD_diabetes_two_conditions_rdd <- ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence") +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD", fill = "IHD", group = before)) +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes", fill = "diabetes", group = before)) +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions", fill = "two_conditions", group = before))
-
-
-
-ggsave(ggplot_IHD_diabetes_two_conditions_rdd, filename = "ggplot_IHD_diabetes_two_conditions_rdd.pdf", width = 12, height = 7)
-```
-
-```{r}
-ggplot_arthritis_depression_more_than_two_rdd <-
-  ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
-  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
-  scale_colour_discrete() +
-  scale_x_continuous(breaks = seq(-8, 8, 2)) +
-  xlab("Primary care physician years from integration") +
-  ylab("Prevalence") +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis", fill = "arthritis", group = before)) +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression", fill = "depression", group = before)) +
-  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions", fill = "more_than_two_conditions", group = before))
-
-ggsave(ggplot_arthritis_depression_more_than_two_rdd, filename = "ggplot_arthritis_depression_more_than_two_rdd.pdf", width = 12, height = 7)
-```
-
-<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
-# Comparisons based on integration status
-<!-- #endregion -->
-
-<!-- #region tags=[] -->
-## Read cleaned results
-<!-- #endregion -->
-
-```{r}
-# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
-yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
-```
-
-```{r}
-yearly_calculations[DESY_SORT_KEY == "100005325"]
-```
-
-<!-- #region tags=[] -->
-## Comparison functions
-<!-- #endregion -->
-
-```{r}
-comparator_averages <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-
-  result <- data %>%
-    group_by(most_common_primary_care_physician_integrated) %>%
-    summarise(
-      n = n(),
-      N_distinct_patients = length(unique(DESY_SORT_KEY)),
-      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
-      Male = mean(sex == "Male", na.rm = T),
-      Female = mean(sex == "Female", na.rm = T),
-      Asian = mean(race == "Asian", na.rm = T),
-      Black = mean(race == "Black", na.rm = T),
-      Hispanic = mean(race == "Hispanic", na.rm = T),
-      North_American_Native = mean(race == "North American Native", na.rm = T),
-      White = mean(race == "White", na.rm = T),
-      Other_race = mean(race == "Other", na.rm = T),
-      avg_age = mean(AGE, na.rm = T),
-      age_65_74 = mean(na.rm = T, age_group == "65-74"),
-      age_75_84 = mean(na.rm = T, age_group == "75-84"),
-      age_85_plus = mean(na.rm = T, age_group == "85+"),
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
-      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
-      # primary_care_physician_integrated =
-      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
-      # most_common_physician_integrated =
-      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-comparator_tests <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-  result <- data %>%
-    mutate(
-      integration_status = most_common_primary_care_physician_integrated
-    ) %>%
-    summarise(
-      Male = chisq.test(sex == "Male", integration_status)$p.value,
-      Female = chisq.test(sex == "Female", integration_status)$p.value,
-      Asian = chisq.test(race == "Asian", integration_status)$p.value,
-      Black = chisq.test(race == "Black", integration_status)$p.value,
-      Hispanic = chisq.test(race == "Hispanic", integration_status)$p.value,
-      North_American_Native = chisq.test(race == "North American Native", integration_status)$p.value,
-      White = chisq.test(race == "White", integration_status)$p.value,
-      Other_race = chisq.test(race == "Other", integration_status)$p.value,
-      avg_age = t.test(AGE ~ integration_status, data = .)$p.value,
-      age_65_74 = chisq.test(age_group == "65-74", integration_status)$p.value,
-      age_75_84 = chisq.test(age_group == "75-84", integration_status)$p.value,
-      age_85_plus = chisq.test(age_group == "85+", integration_status)$p.value,
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = chisq.test(RUCC_2013 > 3, integration_status)$p.value,
-      urban_prp = chisq.test(RUCC_2013 <= 3, integration_status)$p.value,
-      hypertension = chisq.test(hypertension, integration_status)$p.value,
-      arthritis = chisq.test(arthritis, integration_status)$p.value,
-      IHD = chisq.test(IHD, integration_status)$p.value,
-      diabetes = chisq.test(diabetes, integration_status)$p.value,
-      depression = chisq.test(depression, integration_status)$p.value,
-      two_conditions = chisq.test(number_of_conditions == 2, integration_status)$p.value,
-      more_than_two_conditions = chisq.test(number_of_conditions > 2, integration_status)$p.value,
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-overall_averages <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-
-  result <- data %>%
-    summarise(
-      n = n(),
-      N_distinct_patients = length(unique(DESY_SORT_KEY)),
-      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
-      Male = mean(sex == "Male", na.rm = T),
-      Female = mean(sex == "Female", na.rm = T),
-      Asian = mean(race == "Asian", na.rm = T),
-      Black = mean(race == "Black", na.rm = T),
-      Hispanic = mean(race == "Hispanic", na.rm = T),
-      North_American_Native = mean(race == "North American Native", na.rm = T),
-      White = mean(race == "White", na.rm = T),
-      Other_race = mean(race == "Other", na.rm = T),
-      avg_age = mean(AGE, na.rm = T),
-      age_65_74 = mean(na.rm = T, age_group == "65-74"),
-      age_75_84 = mean(na.rm = T, age_group == "75-84"),
-      age_85_plus = mean(na.rm = T, age_group == "85+"),
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
-      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
-      # primary_care_physician_integrated =
-      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
-      # most_common_physician_integrated =
-      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-primary_care_physician_comparisons_averages <-
-  comparator_averages(yearly_calculations)
-
-primary_care_physician_comparisons_test <-
-  comparator_tests(yearly_calculations)
-
-primary_care_physician_overall_averages <-
-  overall_averages(yearly_calculations)
-```
-
-```{r}
-primary_care_physician_comparisons_averages
-```
-
-```{r}
-primary_care_physician_comparisons_test
-```
-
-```{r}
-primary_care_physician_overall_averages
-```
-
-```{r}
-comparison_results_primary_care_physician <- rbind(
-  primary_care_physician_overall_averages,
-  primary_care_physician_comparisons_averages,
-  primary_care_physician_comparisons_test,
-  fill = TRUE
-)
-t(comparison_results_primary_care_physician)
-```
-
-# Finding the prevelances of the chronic conditions in patients entering and exiting
-
-<!-- #region tags=[] -->
-## Read cleaned results
-<!-- #endregion -->
-
-```{r}
-# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
-yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
-```
-
-```{r}
-yearly_calculations[DESY_SORT_KEY == "100005325"]
-```
-
-## Find entering, exiting, and remaining patients
-
-```{r}
-yearly_calculations <- yearly_calculations %>%
-  mutate(
-    exit_enter_status = case_when(
-      most_common_primary_care_physician_integration_change == "newly_integrated" &
-        most_common_primary_care_physician_changed == "FALSE" ~ "Remaining",
-      most_common_primary_care_physician_integration_change == "newly_integrated" &
-        most_common_primary_care_physician_changed == "TRUE" ~ "Entering",
-      last_year_most_common_primary_care_physician_integration_change == "newly_integrated" &
-        most_common_primary_care_physician_changed == "TRUE" ~ "Exiting"
-    )
-  ) %>%
-  as.data.table()
-yearly_calculations[DESY_SORT_KEY == "100005325"]
-```
-
-```{r}
-comparator_exit_enter <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-
-  result <- data %>%
-    group_by(exit_enter_status) %>%
-    summarise(
-      n = n(),
-      N_distinct_patients = length(unique(DESY_SORT_KEY)),
-      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
-      Male = mean(sex == "Male", na.rm = T),
-      Female = mean(sex == "Female", na.rm = T),
-      Asian = mean(race == "Asian", na.rm = T),
-      Black = mean(race == "Black", na.rm = T),
-      Hispanic = mean(race == "Hispanic", na.rm = T),
-      North_American_Native = mean(race == "North American Native", na.rm = T),
-      White = mean(race == "White", na.rm = T),
-      Other_race = mean(race == "Other", na.rm = T),
-      avg_age = mean(AGE, na.rm = T),
-      age_65_74 = mean(na.rm = T, age_group == "65-74"),
-      age_75_84 = mean(na.rm = T, age_group == "75-84"),
-      age_85_plus = mean(na.rm = T, age_group == "85+"),
-
-      # West=mean(na.rm=T,census_region=="West"),
-      # South=mean(na.rm=T,census_region=="South"),
-      # Northeast=mean(na.rm=T,census_region=="Northeast"),
-      # Midwest=mean(na.rm=T,census_region=="Midwest"),
-
-      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
-      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
-      hypertension = mean(hypertension, na.rm = T),
-      arthritis = mean(arthritis, na.rm = T),
-      IHD = mean(IHD, na.rm = T),
-      diabetes = mean(diabetes, na.rm = T),
-      depression = mean(depression, na.rm = T),
-      two_conditions = mean(number_of_conditions == 2, na.rm = T),
-      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
-      died_the_year_of_integration = mean(year == year_of_death, na.rm = T)
-
-      # primary_care_physician_integrated =
-      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
-      # most_common_physician_integrated =
-      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
-    ) %>%
-    as.data.table()
-
-  return(result)
-}
-```
-
-```{r}
-exit_enter_comparisons <- t(comparator_exit_enter(yearly_calculations))
-```
-
-```{r}
-exit_enter_comparisons
-```
-
-# Conditions in the dropping patients.
-
-
-## In integrating doctors
-
-```{r}
-exit_conditions <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-
-  results_1 <- data %>%
-    group_by(last_year_most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
-    summarise(
-      n_exiting_patients = length(unique(.[exit_enter_status == "Exiting", DESY_SORT_KEY])),
-      mortality = mean(.[exit_enter_status == "Exiting", year == year_of_death], na.rm = T),
-      received_primary_care_elsewhere =
-        mean(.[
-          last_year_most_common_primary_care_physician_integration_change == "newly_integrated",
-          !is.na(most_common_primary_care_physician_PRF_PHYSN_NPI)
-        ], na.rm = T)
-    ) %>%
-    as.data.table()
-
-  results_2 <- data %>%
-    filter(most_common_primary_care_physician_years_from_integration == -1) %>%
-    group_by(most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
-    summarise(n_patients_year_before_integration = length(unique(DESY_SORT_KEY))) %>%
-    as.data.table()
-
-  results <- inner_join(results_1, results_2, by = c("last_year_most_common_primary_care_physician_PRF_PHYSN_NPI" = "most_common_primary_care_physician_PRF_PHYSN_NPI")) %>%
-    mutate(dropped_prp = n_exiting_patients / n_patients_year_before_integration) %>%
-    as.data.table()
-
-  result <- results %>%
-    summarise(
-      dropped_prp = mean(dropped_prp, na.rm = T),
-      mortality_prp = mean(mortality, na.rm = T),
-      received_primary_care_elsewhere = mean(received_primary_care_elsewhere, na.rm = T)
-    ) %>%
-    as.data.table()
-
-  return(results)
-}
-```
-
-```{r}
-results_exit_conditions_integrating <- exit_conditions(yearly_calculations)
-```
-
-```{r}
-head(results_exit_conditions_integrating)
-```
-
-## In independent docs
-
-```{r}
-exit_conditions_all <- function(data) {
-  require(tidyverse)
-  require(dtplyr)
-
-  results_1 <- data %>%
-    filter(last_year_most_common_primary_care_physician_never_integrated == T) %>%
-    group_by(last_year_most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
-    summarise(
-      n_exiting_patients = length(unique(.[most_common_primary_care_physician_changed == TRUE, DESY_SORT_KEY])),
-      mortality = mean(.[most_common_primary_care_physician_changed == TRUE, year == year_of_death], na.rm = T),
-      received_primary_care_elsewhere =
-        mean(!is.na(most_common_primary_care_physician_PRF_PHYSN_NPI), na.rm = T)
-    ) %>%
-    as.data.table()
-
-  results_2 <- data %>%
-    filter(most_common_primary_care_physician_never_integrated == T) %>%
-    group_by(most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
-    summarise(n_patients_all_years = length(unique(DESY_SORT_KEY))) %>%
-    as.data.table()
-
-  results <- inner_join(results_1, results_2,
-    by =
-      c(
-        "last_year_most_common_primary_care_physician_PRF_PHYSN_NPI" =
-          "most_common_primary_care_physician_PRF_PHYSN_NPI"
-      )
-  ) %>%
-    mutate(dropped_prp = n_exiting_patients / n_patients_all_years) %>%
-    as.data.table()
-
-  result <- results %>%
-    summarise(
-      dropped_prp = mean(dropped_prp, na.rm = T),
-      mortality_prp = mean(mortality, na.rm = T),
-      received_primary_care_elsewhere = mean(received_primary_care_elsewhere, na.rm = T)
-    ) %>%
-    as.data.table()
-
-  return(results)
-}
-```
-
-```{r}
-results_exit_conditions_all <- exit_conditions_all(yearly_calculations)
-```
-
-```{r}
-head(results_exit_conditions_all)
-```
-
-## Comparison test
-
-```{r}
-t.test(results_exit_conditions_all$mortality, results_exit_conditions_integrating$mortality)
-```
-
-```{r}
-t.test(
-  results_exit_conditions_all$received_primary_care_elsewhere,
-  results_exit_conditions_integrating$received_primary_care_elsewhere
-)
-```
-
-```{r}
-t.test(
-  results_exit_conditions_all$dropped_prp,
-  results_exit_conditions_integrating$dropped_prp
-)
-```
-
-```{r}
-
-```
-
 <!-- #region tags=[] -->
 # Adding claim level file
 <!-- #endregion -->
 
-```{r tags=c(), jupyter={'outputs_hidden': True}}
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
+## Reading the CSVs
+<!-- #endregion -->
+
+```{r tags=c(), jupyter={'outputs_hidden': {'outputs_hidden': True}}}
 claim_carrier_2013 <- vroom(file = "/work/postresearch/Shared/Data_raw/Medicare/Claims/CSV/car_claimsj_lds_5_2013.csv", num_threads = numcores) %>% as.data.table()
 claim_carrier_2014 <- vroom(file = "/work/postresearch/Shared/Data_raw/Medicare/Claims/CSV/car_claimsj_lds_5_2014.csv", num_threads = numcores) %>% as.data.table()
 claim_carrier_2015 <- vroom(file = "/work/postresearch/Shared/Data_raw/Medicare/Claims/CSV/car_claimsj_lds_5_2015.csv", num_threads = numcores) %>% as.data.table()
@@ -1842,7 +1241,9 @@ write_fst(claim_inpatient_all_years, "/work/postresearch/Shared/Projects/Data_fs
 write_fst(claim_outpatient_all_years, "/work/postresearch/Shared/Projects/Data_fst/claim_outpatient_all_years.fst")
 ```
 
-# Reading fst claim level files
+<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true -->
+## Reading fst claim level files
+<!-- #endregion -->
 
 ```{r}
 claim_carrier_all_years=read_fst("/work/postresearch/Shared/Projects/Data_fst/claim_carrier_all_years.fst",as.data.table = T)
@@ -1862,12 +1263,13 @@ claim_inpatient_all_years=head(claim_inpatient_all_years,100)
 claim_outpatient_all_years=head(claim_outpatient_all_years,100)
 ```
 
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
 ## Conditions
-
+<!-- #endregion -->
 
 ### Carrier
 
-```{r tags=c(), jupyter={'source_hidden': True}}
+```{r tags=c()}
 conditions_claim_carrier=
 
 claim_carrier_all_years %>%
@@ -2237,7 +1639,7 @@ head(conditions_claim_carrier)
 
 ### Inpatient
 
-```{r tags=c(), jupyter={'source_hidden': True}}
+```{r tags=c()}
 conditions_claim_inpatient=
 claim_inpatient_all_years %>%
 summarise(
@@ -2968,7 +2370,7 @@ tail(conditions_claim_inpatient)
 
 ### Outpatient
 
-```{r tags=c(), jupyter={'source_hidden': True}}
+```{r tags=c()}
 conditions_claim_outpatient=
 claim_outpatient_all_years %>%
 summarise(
@@ -3704,4 +3106,671 @@ summary_claim_level_patient_by_year <- summarise_claim_level(claim_level_all_dat
 
 ```{r}
 tail(summary_claim_level_patient_by_year)
+```
+
+```{r}
+write_fst(summary_claim_level_patient_by_year, "/work/postresearch/Shared/Projects/Farbod/CaseMix/summary_claim_level_patient_by_year.fst")
+```
+
+## Reading the claim level conditions results
+
+```{r}
+summary_claim_level_patient_by_year=read_fst("/work/postresearch/Shared/Projects/Farbod/CaseMix/summary_claim_level_patient_by_year.fst",as.data.table = T)
+```
+
+```{r}
+summary_claim_level_patient_by_year[,year:=as.double(year)]
+```
+
+```{r}
+head(summary_claim_level_patient_by_year)
+```
+
+## Adding to the main data
+
+```{r}
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
+```
+
+```{r}
+head(yearly_calculations)
+```
+
+```{r}
+yearly_calculations=
+yearly_calculations %>%
+left_join(.,summary_claim_level_patient_by_year,by=c("DESY_SORT_KEY","year"),suffix = c("_old","_carrier"))%>%
+mutate(hypertension=hypertension_old|hypertension_carrier,
+       arthritis=arthritis_old|arthritis_carrier,
+       IHD=IHD_old|IHD_carrier,
+       diabetes=diabetes_old|diabetes_carrier,
+       depression=depression_old|depression_carrier
+      )%>%
+as.data.table()
+```
+
+```{r}
+head(yearly_calculations)
+```
+
+## Counting number of conditions
+
+```{r}
+yearly_calculations[, number_of_conditions := sum(hypertension, arthritis, IHD, diabetes, depression, na.rm = T), ,
+  by = 1:nrow(yearly_calculations)
+]
+```
+
+```{r}
+head(yearly_calculations)
+```
+
+```{r}
+write_fst(yearly_calculations, "yearly_calculations_with_integration_changes_mdppas_claim_level.fst")
+```
+
+## Patient pool changes
+
+<!-- #region tags=[] -->
+### Read cleaned results
+<!-- #endregion -->
+
+```{r}
+# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas_claim_level.fst", as.data.table = T)
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
+### Summarize Changes
+<!-- #endregion -->
+
+```{r}
+integration_change_summarizer <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+  result <-
+    data %>%
+    filter(!is.na(most_common_primary_care_physician_years_from_integration)) %>%
+    group_by(most_common_primary_care_physician_years_from_integration) %>%
+    summarise(
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T)
+    ) %>%
+    as.data.table()
+}
+```
+
+```{r}
+integration_changes_years_to_integration <- integration_change_summarizer(yearly_calculations)
+```
+
+```{r}
+integration_changes_years_to_integration
+```
+
+```{r}
+ggplot_all_variables <- ggplot(data = integration_changes_years_to_integration) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence")
+
+ggsave(ggplot_all_variables, filename = "ggplot_all_variables.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_hypertension <- ggplot(data = integration_changes_years_to_integration) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence")
+
+ggsave(ggplot_hypertension, filename = "ggplot_hypertension.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_arthritis_depression_more_than_two <- ggplot(data = integration_changes_years_to_integration) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence")
+
+ggsave(ggplot_arthritis_depression_more_than_two, filename = "ggplot_arthritis_depression_more_than_two.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_IHD_diabetes_two_conditions <- ggplot(data = integration_changes_years_to_integration) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence")
+
+ggsave(ggplot_IHD_diabetes_two_conditions, filename = "ggplot_IHD_diabetes_two_conditions.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_hypertension_rdd <- ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence") +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = hypertension, color = "hypertension", fill = "hypertension", group = before))
+
+
+
+ggsave(ggplot_hypertension_rdd, filename = "ggplot_hypertension_rdd.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_IHD_diabetes_two_conditions_rdd <- ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence") +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = IHD, color = "IHD", fill = "IHD", group = before)) +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = diabetes, color = "diabetes", fill = "diabetes", group = before)) +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = two_conditions, color = "two_conditions", fill = "two_conditions", group = before))
+
+
+
+ggsave(ggplot_IHD_diabetes_two_conditions_rdd, filename = "ggplot_IHD_diabetes_two_conditions_rdd.pdf", width = 12, height = 7)
+```
+
+```{r}
+ggplot_arthritis_depression_more_than_two_rdd <-
+  ggplot(data = integration_changes_years_to_integration %>% mutate(before = (most_common_primary_care_physician_years_from_integration < 0)) %>% as.data.frame()) +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "black", size = 1.5) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression")) +
+  geom_line(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  geom_point(aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions")) +
+  scale_colour_discrete() +
+  scale_x_continuous(breaks = seq(-8, 8, 2)) +
+  xlab("Primary care physician years from integration") +
+  ylab("Prevalence") +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = arthritis, color = "arthritis", fill = "arthritis", group = before)) +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = depression, color = "depression", fill = "depression", group = before)) +
+  geom_smooth(method = "lm", aes(x = most_common_primary_care_physician_years_from_integration, y = more_than_two_conditions, color = "more_than_two_conditions", fill = "more_than_two_conditions", group = before))
+
+ggsave(ggplot_arthritis_depression_more_than_two_rdd, filename = "ggplot_arthritis_depression_more_than_two_rdd.pdf", width = 12, height = 7)
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
+# Comparisons based on integration status
+<!-- #endregion -->
+
+<!-- #region tags=[] -->
+## Read cleaned results
+<!-- #endregion -->
+
+```{r}
+# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas_claim_level.fst", as.data.table = T)
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+<!-- #region tags=[] -->
+## Comparison functions
+<!-- #endregion -->
+
+```{r}
+comparator_averages <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  result <- data %>%
+    group_by(most_common_primary_care_physician_integrated) %>%
+    summarise(
+      n = n(),
+      N_distinct_patients = length(unique(DESY_SORT_KEY)),
+      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
+      Male = mean(sex == "Male", na.rm = T),
+      Female = mean(sex == "Female", na.rm = T),
+      Asian = mean(race == "Asian", na.rm = T),
+      Black = mean(race == "Black", na.rm = T),
+      Hispanic = mean(race == "Hispanic", na.rm = T),
+      North_American_Native = mean(race == "North American Native", na.rm = T),
+      White = mean(race == "White", na.rm = T),
+      Other_race = mean(race == "Other", na.rm = T),
+      avg_age = mean(AGE, na.rm = T),
+      age_65_74 = mean(na.rm = T, age_group == "65-74"),
+      age_75_84 = mean(na.rm = T, age_group == "75-84"),
+      age_85_plus = mean(na.rm = T, age_group == "85+"),
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
+      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
+      # primary_care_physician_integrated =
+      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
+      # most_common_physician_integrated =
+      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+comparator_tests <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+  result <- data %>%
+    mutate(
+      integration_status = most_common_primary_care_physician_integrated
+    ) %>%
+    summarise(
+      Male = chisq.test(sex == "Male", integration_status)$p.value,
+      Female = chisq.test(sex == "Female", integration_status)$p.value,
+      Asian = chisq.test(race == "Asian", integration_status)$p.value,
+      Black = chisq.test(race == "Black", integration_status)$p.value,
+      Hispanic = chisq.test(race == "Hispanic", integration_status)$p.value,
+      North_American_Native = chisq.test(race == "North American Native", integration_status)$p.value,
+      White = chisq.test(race == "White", integration_status)$p.value,
+      Other_race = chisq.test(race == "Other", integration_status)$p.value,
+      avg_age = t.test(AGE ~ integration_status, data = .)$p.value,
+      age_65_74 = chisq.test(age_group == "65-74", integration_status)$p.value,
+      age_75_84 = chisq.test(age_group == "75-84", integration_status)$p.value,
+      age_85_plus = chisq.test(age_group == "85+", integration_status)$p.value,
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = chisq.test(RUCC_2013 > 3, integration_status)$p.value,
+      urban_prp = chisq.test(RUCC_2013 <= 3, integration_status)$p.value,
+      hypertension = chisq.test(hypertension, integration_status)$p.value,
+      arthritis = chisq.test(arthritis, integration_status)$p.value,
+      IHD = chisq.test(IHD, integration_status)$p.value,
+      diabetes = chisq.test(diabetes, integration_status)$p.value,
+      depression = chisq.test(depression, integration_status)$p.value,
+      two_conditions = chisq.test(number_of_conditions == 2, integration_status)$p.value,
+      more_than_two_conditions = chisq.test(number_of_conditions > 2, integration_status)$p.value,
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+overall_averages <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  result <- data %>%
+    summarise(
+      n = n(),
+      N_distinct_patients = length(unique(DESY_SORT_KEY)),
+      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
+      Male = mean(sex == "Male", na.rm = T),
+      Female = mean(sex == "Female", na.rm = T),
+      Asian = mean(race == "Asian", na.rm = T),
+      Black = mean(race == "Black", na.rm = T),
+      Hispanic = mean(race == "Hispanic", na.rm = T),
+      North_American_Native = mean(race == "North American Native", na.rm = T),
+      White = mean(race == "White", na.rm = T),
+      Other_race = mean(race == "Other", na.rm = T),
+      avg_age = mean(AGE, na.rm = T),
+      age_65_74 = mean(na.rm = T, age_group == "65-74"),
+      age_75_84 = mean(na.rm = T, age_group == "75-84"),
+      age_85_plus = mean(na.rm = T, age_group == "85+"),
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
+      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
+      # primary_care_physician_integrated =
+      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
+      # most_common_physician_integrated =
+      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+primary_care_physician_comparisons_averages <-
+  comparator_averages(yearly_calculations)
+
+primary_care_physician_comparisons_test <-
+  comparator_tests(yearly_calculations)
+
+primary_care_physician_overall_averages <-
+  overall_averages(yearly_calculations)
+```
+
+```{r}
+primary_care_physician_comparisons_averages
+```
+
+```{r}
+primary_care_physician_comparisons_test
+```
+
+```{r}
+primary_care_physician_overall_averages
+```
+
+```{r}
+comparison_results_primary_care_physician <- rbind(
+  primary_care_physician_overall_averages,
+  primary_care_physician_comparisons_averages,
+  primary_care_physician_comparisons_test,
+  fill = TRUE
+)
+t(comparison_results_primary_care_physician)
+```
+
+# Finding the prevelances of the chronic conditions in patients entering and exiting
+
+<!-- #region tags=[] -->
+## Read cleaned results
+<!-- #endregion -->
+
+```{r}
+# yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas_claim_level.fst", as.data.table = T)
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+## Find entering, exiting, and remaining patients
+
+```{r}
+yearly_calculations <- yearly_calculations %>%
+  mutate(
+    exit_enter_status = case_when(
+      most_common_primary_care_physician_integration_change == "newly_integrated" &
+        most_common_primary_care_physician_changed == "FALSE" ~ "Remaining",
+      most_common_primary_care_physician_integration_change == "newly_integrated" &
+        most_common_primary_care_physician_changed == "TRUE" ~ "Entering",
+      last_year_most_common_primary_care_physician_integration_change == "newly_integrated" &
+        most_common_primary_care_physician_changed == "TRUE" ~ "Exiting"
+    )
+  ) %>%
+  as.data.table()
+yearly_calculations[DESY_SORT_KEY == "100005325"]
+```
+
+```{r}
+comparator_exit_enter <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  result <- data %>%
+    group_by(exit_enter_status) %>%
+    summarise(
+      n = n(),
+      N_distinct_patients = length(unique(DESY_SORT_KEY)),
+      N_distinct_specialist = length(unique(most_common_primary_care_physician_PRF_PHYSN_NPI)),
+      Male = mean(sex == "Male", na.rm = T),
+      Female = mean(sex == "Female", na.rm = T),
+      Asian = mean(race == "Asian", na.rm = T),
+      Black = mean(race == "Black", na.rm = T),
+      Hispanic = mean(race == "Hispanic", na.rm = T),
+      North_American_Native = mean(race == "North American Native", na.rm = T),
+      White = mean(race == "White", na.rm = T),
+      Other_race = mean(race == "Other", na.rm = T),
+      avg_age = mean(AGE, na.rm = T),
+      age_65_74 = mean(na.rm = T, age_group == "65-74"),
+      age_75_84 = mean(na.rm = T, age_group == "75-84"),
+      age_85_plus = mean(na.rm = T, age_group == "85+"),
+
+      # West=mean(na.rm=T,census_region=="West"),
+      # South=mean(na.rm=T,census_region=="South"),
+      # Northeast=mean(na.rm=T,census_region=="Northeast"),
+      # Midwest=mean(na.rm=T,census_region=="Midwest"),
+
+      rural_prp = mean(RUCC_2013 > 3, na.rm = T),
+      urban_prp = mean(RUCC_2013 <= 3, na.rm = T),
+      hypertension = mean(hypertension, na.rm = T),
+      arthritis = mean(arthritis, na.rm = T),
+      IHD = mean(IHD, na.rm = T),
+      diabetes = mean(diabetes, na.rm = T),
+      depression = mean(depression, na.rm = T),
+      two_conditions = mean(number_of_conditions == 2, na.rm = T),
+      more_than_two_conditions = mean(number_of_conditions > 2, na.rm = T),
+      died_the_year_of_integration = mean(year == year_of_death, na.rm = T)
+
+      # primary_care_physician_integrated =
+      #  sum(most_common_primary_care_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n(),
+      # most_common_physician_integrated =
+      #  sum(most_common_physician_in_facility_non_exclusive_HCPCS_prp >= integration_threshold, na.rm = T) / n()
+    ) %>%
+    as.data.table()
+
+  return(result)
+}
+```
+
+```{r}
+exit_enter_comparisons <- t(comparator_exit_enter(yearly_calculations))
+```
+
+```{r}
+exit_enter_comparisons
+```
+
+# Conditions in the dropping patients.
+
+
+## In integrating doctors
+
+```{r}
+exit_conditions <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+
+  results_1 <- data %>%
+    group_by(last_year_most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
+    summarise(
+      n_exiting_patients = length(unique(.[exit_enter_status == "Exiting", DESY_SORT_KEY])),
+      mortality = mean(.[exit_enter_status == "Exiting", year == year_of_death], na.rm = T),
+      received_primary_care_elsewhere =
+        mean(.[
+          last_year_most_common_primary_care_physician_integration_change == "newly_integrated",
+          !is.na(most_common_primary_care_physician_PRF_PHYSN_NPI)
+        ], na.rm = T)
+    ) %>%
+    as.data.table()
+
+  results_2 <- data %>%
+    filter(most_common_primary_care_physician_years_from_integration == -1) %>%
+    group_by(most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
+    summarise(n_patients_year_before_integration = length(unique(DESY_SORT_KEY))) %>%
+    as.data.table()
+
+  results <- inner_join(results_1, results_2, by = c("last_year_most_common_primary_care_physician_PRF_PHYSN_NPI" = "most_common_primary_care_physician_PRF_PHYSN_NPI")) %>%
+    mutate(dropped_prp = n_exiting_patients / n_patients_year_before_integration) %>%
+    as.data.table()
+
+  result <- results %>%
+    summarise(
+      dropped_prp = mean(dropped_prp, na.rm = T),
+      mortality_prp = mean(mortality, na.rm = T),
+      received_primary_care_elsewhere = mean(received_primary_care_elsewhere, na.rm = T)
+    ) %>%
+    as.data.table()
+
+  return(results)
+}
+```
+
+```{r}
+results_exit_conditions_integrating <- exit_conditions(yearly_calculations)
+```
+
+```{r}
+head(results_exit_conditions_integrating)
+```
+
+## In independent docs
+
+```{r}
+exit_conditions_all <- function(data) {
+  require(tidyverse)
+  require(dtplyr)
+
+  results_1 <- data %>%
+    filter(last_year_most_common_primary_care_physician_never_integrated == T) %>%
+    group_by(last_year_most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
+    summarise(
+      n_exiting_patients = length(unique(.[most_common_primary_care_physician_changed == TRUE, DESY_SORT_KEY])),
+      mortality = mean(.[most_common_primary_care_physician_changed == TRUE, year == year_of_death], na.rm = T),
+      received_primary_care_elsewhere =
+        mean(!is.na(most_common_primary_care_physician_PRF_PHYSN_NPI), na.rm = T)
+    ) %>%
+    as.data.table()
+
+  results_2 <- data %>%
+    filter(most_common_primary_care_physician_never_integrated == T) %>%
+    group_by(most_common_primary_care_physician_PRF_PHYSN_NPI) %>%
+    summarise(n_patients_all_years = length(unique(DESY_SORT_KEY))) %>%
+    as.data.table()
+
+  results <- inner_join(results_1, results_2,
+    by =
+      c(
+        "last_year_most_common_primary_care_physician_PRF_PHYSN_NPI" =
+          "most_common_primary_care_physician_PRF_PHYSN_NPI"
+      )
+  ) %>%
+    mutate(dropped_prp = n_exiting_patients / n_patients_all_years) %>%
+    as.data.table()
+
+  result <- results %>%
+    summarise(
+      dropped_prp = mean(dropped_prp, na.rm = T),
+      mortality_prp = mean(mortality, na.rm = T),
+      received_primary_care_elsewhere = mean(received_primary_care_elsewhere, na.rm = T)
+    ) %>%
+    as.data.table()
+
+  return(results)
+}
+```
+
+```{r}
+results_exit_conditions_all <- exit_conditions_all(yearly_calculations)
+```
+
+```{r}
+head(results_exit_conditions_all)
+```
+
+## Comparison test
+
+```{r}
+t.test(results_exit_conditions_all$mortality, results_exit_conditions_integrating$mortality)
+```
+
+```{r}
+t.test(
+  results_exit_conditions_all$received_primary_care_elsewhere,
+  results_exit_conditions_integrating$received_primary_care_elsewhere
+)
+```
+
+```{r}
+t.test(
+  results_exit_conditions_all$dropped_prp,
+  results_exit_conditions_integrating$dropped_prp
+)
+```
+
+```{r}
+
+```
+
+```{r}
+
 ```
