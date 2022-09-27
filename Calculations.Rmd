@@ -35,7 +35,7 @@ options(repr.matrix.max.rows = 100, repr.matrix.max.cols = 300)
 options(repr.plot.width = 20, repr.plot.height = 15)
 options(width = 300)
 
-numcores <- 128
+numcores <- 56
 
 library(tidyverse)
 library(data.table)
@@ -158,7 +158,9 @@ arthritis_icd_10_codes <- c("M0500","M05011","M05012","M05019","M05021","M05022"
 
 ```
 
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
 ## CMS codes sepparated
+<!-- #endregion -->
 
 ```{r}
 office_visit_codes <- c(
@@ -765,14 +767,14 @@ head(summary_with_physician_integration_stats)
 ```
 
 ```{r}
-write.fst(summary_with_physician_integration_stats, "summary_with_physician_integration_stats_new.fst")
+write.fst(summary_with_physician_integration_stats, "summary_with_physician_integration_stats_new_new.fst")
 ```
 
 ```{r}
 summary_with_npi[DESY_SORT_KEY == "100005325"]
 ```
 
-<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true tags=[] -->
+<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true tags=[] -->
 # Comparisons and analyses
 <!-- #endregion -->
 
@@ -782,7 +784,7 @@ summary_with_npi[DESY_SORT_KEY == "100005325"]
 
 ```{r tags=c()}
 yearly_calculations <-
-  read_fst("calculation_results.fst", as.data.table = T)
+  read_fst("calculation_results_new_new.fst", as.data.table = T)
 
 yearly_calculations <- unique(yearly_calculations)
 ```
@@ -925,11 +927,17 @@ yearly_calculations <- data_for_modelling_filter(yearly_calculations)
 length(yearly_calculations$DESY_SORT_KEY)
 ```
 
+```{r}
+write_fst(yearly_calculations, "yearly_calculations_cleaned_new.fst")
+```
+
 <!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
 # Add MDPPAS
 <!-- #endregion -->
 
+<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true -->
 ## Read from SAS file and convert to fst
+<!-- #endregion -->
 
 ```{r tags=c()}
 library(haven)
@@ -963,7 +971,7 @@ head(mdppas_data)
 ## Add to calculations and integration stats
 
 ```{r}
-yearly_calculations <- read_fst("yearly_calculations_cleaned.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_cleaned_new.fst", as.data.table = T)
 ```
 
 ```{r}
@@ -975,7 +983,7 @@ head(yearly_calculations)
 ```
 
 ```{r}
-write_fst(x = yearly_calculations, "yearly_calculations_cleaned_with_mdppas.fst", compress = 0)
+write_fst(x = yearly_calculations, "yearly_calculations_cleaned_with_mdppas_new.fst", compress = 0)
 ```
 
 ```{r}
@@ -1051,7 +1059,7 @@ physician_integration_stats_changes <- physician_integration_change_finder(physi
 ```
 
 ```{r}
-yearly_calculations <- read.fst("./yearly_calculations_cleaned_with_mdppas.fst", as.data.table = T)
+yearly_calculations <- read.fst("yearly_calculations_cleaned_with_mdppas_new.fst", as.data.table = T)
 ```
 
 ```{r tags=c()}
@@ -1125,14 +1133,46 @@ head(yearly_calculations)
 ```
 
 ```{r}
-write.fst(yearly_calculations, "yearly_calculations_with_integration_changes_mdppas.fst")
+write_fst(x = yearly_calculations, "yearly_calculations_cleaned_with_mdppas_with_physician_changes_new.fst", compress = 0)
+```
+
+```{r}
+yearly_calculations = read_fst( "yearly_calculations_cleaned_with_mdppas_with_physician_changes_new.fst") %>% as.data.table()
+```
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100000015"]
+```
+
+```{r}
+temp=yearly_calculations %>% 
+group_by(DESY_SORT_KEY) %>%
+arrange(year)%>%
+mutate(arthritis=case_when(lag(arthritis)==T ~ T, T ~ arthritis),
+       hypertension=case_when(lag(hypertension)==T ~ T, T ~ hypertension),
+       IHD=case_when(lag(IHD)==T ~ T, T ~ IHD),
+       diabetes=case_when(lag(diabetes)==T ~ T, T ~ diabetes)
+      )%>%
+as.data.table()
+```
+
+```{r}
+temp[DESY_SORT_KEY == "100000015"]
+```
+
+```{r}
+yearly_calculations <- temp
+```
+
+```{r}
+write.fst(yearly_calculations, "yearly_calculations_cleaned_with_mdppas_with_physician_changes__with_lag_repeat_new.fst")
 ```
 
 <!-- #region tags=[] -->
 # Adding claim level file
 <!-- #endregion -->
 
-<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
 ## Reading the CSVs
 <!-- #endregion -->
 
@@ -1328,7 +1368,7 @@ write_fst(claim_inpatient_all_years, "/work/postresearch/Shared/Projects/Data_fs
 write_fst(claim_outpatient_all_years, "/work/postresearch/Shared/Projects/Data_fst/claim_outpatient_all_years.fst")
 ```
 
-<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true -->
+<!-- #region tags=[] jp-MarkdownHeadingCollapsed=true jp-MarkdownHeadingCollapsed=true tags=[] -->
 ## Reading fst claim level files
 <!-- #endregion -->
 
@@ -1350,7 +1390,7 @@ nrow(claim_inpatient_all_years)
 nrow(claim_outpatient_all_years)
 ```
 
-<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] -->
+<!-- #region jp-MarkdownHeadingCollapsed=true tags=[] jp-MarkdownHeadingCollapsed=true -->
 ## Conditions
 <!-- #endregion -->
 
@@ -2270,10 +2310,12 @@ head(summary_claim_level_patient_by_year)
 write_fst(summary_claim_level_patient_by_year, "/work/postresearch/Shared/Projects/Farbod/CaseMix/summary_claim_level_patient_by_year_new_new.fst")
 ```
 
+<!-- #region tags=[] -->
 ## Reading the claim level conditions results
+<!-- #endregion -->
 
 ```{r}
-summary_claim_level_patient_by_year=read_fst("/work/postresearch/Shared/Projects/Farbod/CaseMix/summary_claim_level_patient_by_year.fst",as.data.table = T)
+summary_claim_level_patient_by_year=read_fst("/work/postresearch/Shared/Projects/Farbod/CaseMix/summary_claim_level_patient_by_year_new_new.fst",as.data.table = T)
 ```
 
 ```{r}
@@ -2284,10 +2326,12 @@ summary_claim_level_patient_by_year[,year:=as.double(year)]
 head(summary_claim_level_patient_by_year)
 ```
 
+<!-- #region tags=[] -->
 ## Adding to the main data
+<!-- #endregion -->
 
 ```{r}
-yearly_calculations <- read_fst("yearly_calculations_with_integration_changes_mdppas.fst", as.data.table = T)
+yearly_calculations <- read_fst("yearly_calculations_cleaned_with_mdppas_with_physician_changes_new.fst", as.data.table = T)
 ```
 
 ```{r}
@@ -2309,6 +2353,32 @@ as.data.table()
 
 ```{r}
 head(yearly_calculations)
+```
+
+## Setting conditions to be same as their lag if true
+
+```{r}
+yearly_calculations[DESY_SORT_KEY == "100000015"]
+```
+
+```{r}
+temp=yearly_calculations %>% 
+group_by(DESY_SORT_KEY) %>%
+arrange(year)%>%
+mutate(arthritis=case_when(lag(arthritis)==T ~ T, T ~ arthritis),
+       hypertension=case_when(lag(hypertension)==T ~ T, T ~ hypertension),
+       IHD=case_when(lag(IHD)==T ~ T, T ~ IHD),
+       diabetes=case_when(lag(diabetes)==T ~ T, T ~ diabetes)
+      )%>%
+as.data.table()
+```
+
+```{r}
+temp[DESY_SORT_KEY == "100000015"]
+```
+
+```{r}
+yearly_calculations <- temp
 ```
 
 ## Counting number of conditions
@@ -2925,8 +2995,36 @@ t.test(
 )
 ```
 
-```{r}
+# Export for Brady
 
+```{r}
+colnames(yearly_calculations)
+```
+
+```{r}
+brady_data <-
+yearly_calculations[,.(DESY_SORT_KEY,
+                       year,
+                       most_common_primary_care_physician_PRF_PHYSN_NPI,
+                       AGE,
+                       sex,
+                       race,
+                       urban,
+                       arthritis,
+                       depression,
+                       diabetes,
+                       hypertension,
+                       IHD,
+                       number_of_conditions,
+                       distinct_primary_care_physicians,
+                       most_common_primary_care_physician_changed,
+                       exit_enter_status,
+                       year_of_death
+                      )]
+```
+
+```{r}
+write.csv(x=brady_data,file="patient_composition_data_for_brady.csv")
 ```
 
 ```{r}
